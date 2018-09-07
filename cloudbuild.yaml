@@ -1,0 +1,29 @@
+steps:
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: [
+    'build', 
+    '--cache-from', 'eu.gcr.io/$PROJECT_ID/$REPO_NAME:latest', 
+    '-t', 'eu.gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA', 
+    '-t', 'eu.gcr.io/$PROJECT_ID/$REPO_NAME:latest', 
+    '.'
+    ]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["push", "eu.gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA"]
+
+- name: 'gcr.io/cloud-builders/docker'
+  args: ["push", "eu.gcr.io/$PROJECT_ID/$REPO_NAME:latest"]
+
+- name: 'gcr.io/cloud-builders/kubectl'
+  args:
+  - set
+  - image
+  - deployment
+  - ekostat
+  - ekostat-container=eu.gcr.io/$PROJECT_ID/$REPO_NAME:$SHORT_SHA
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=$_CLOUDSDK_COMPUTE_ZONE'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=$_CLOUDSDK_CONTAINER_CLUSTER'
+
+timeout: 2000s
